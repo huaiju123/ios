@@ -1,0 +1,49 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for iOS Simulator
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available | head -n 20
+
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project NovelReader.xcodeproj \
+            -scheme NovelReader \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tee build.log
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+
+      - name: Upload simulator app
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NovelReader-simulator-app
+          path: build/Build/Products/Debug-iphonesimulator/NovelReader.app
+          if-no-files-found: ignore

@@ -1,0 +1,54 @@
+name: Unsigned IPA
+
+# 只在手动触发时跑：打一个未签名的 ipa，
+# 下载后用 Sideloadly / AltStore 拿自己的 Apple ID 签进手机。
+on:
+  workflow_dispatch:
+
+jobs:
+  ipa:
+    name: Archive unsigned ipa
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: xcodebuild -version
+
+      - name: Archive
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project NovelReader.xcodeproj \
+            -scheme NovelReader \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/App.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" | tee archive.log
+
+      - name: Package ipa
+        run: |
+          mkdir -p build/Payload
+          cp -R build/App.xcarchive/Products/Applications/NovelReader.app build/Payload/
+          cd build && zip -qry NovelReader-unsigned.ipa Payload
+          ls -lh NovelReader-unsigned.ipa
+
+      - name: Upload log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: archive-log
+          path: archive.log
+          if-no-files-found: ignore
+
+      - name: Upload ipa
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NovelReader-unsigned-ipa
+          path: build/NovelReader-unsigned.ipa
+          if-no-files-found: ignore

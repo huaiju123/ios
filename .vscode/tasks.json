@@ -1,0 +1,56 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "iOS: 检查环境",
+      "type": "shell",
+      "command": "xcodebuild -version && xcrun simctl list devices available | head -n 8",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "iOS: 编译（模拟器）",
+      "type": "shell",
+      "command": "bash scripts/build.sh",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "iOS: 编译并运行（模拟器）",
+      "type": "shell",
+      "command": "bash scripts/run-sim.sh",
+      "group": "test",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "iOS: 打未签名 ipa",
+      "type": "shell",
+      "command": "bash scripts/make-ipa.sh",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "iOS: 清理",
+      "type": "shell",
+      "command": "rm -rf build && xcodebuild -project NovelReader.xcodeproj -scheme NovelReader clean",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "iOS: 用 Xcode 打开工程",
+      "type": "shell",
+      "command": "open NovelReader.xcodeproj",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "说明：为什么 Windows 编译不了",
+      "type": "shell",
+      "command": "echo '这个工程依赖 SwiftUI / UIKit / AVFoundation，这些框架只存在于 iOS SDK，只有 macOS + Xcode 才能编译。' && echo 'Windows 上的 VS Code 只能编辑代码。编译请用 macOS，或者推 GitHub 跑 Actions。'",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    }
+  ]
+}
