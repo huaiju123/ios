@@ -1,4 +1,4 @@
-name: iOS Build
+﻿name: iOS Build
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build for iOS Simulator
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
