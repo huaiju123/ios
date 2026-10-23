@@ -38,16 +38,73 @@ VS Code 里能：写代码、跳转补全（SourceKit-LSP 会连 Xcode 的 toolc
 
 **这个工程用的是 Xcode 16 的 folder-sync 格式，新增 `.swift` 文件不需要动工程文件**：VS Code 里直接新建，Xcode 下次打开自动带上。只有加第三方库、改 Info.plist 键、改 Bundle ID 才需要开 Xcode。
 
-### B. 没 Mac：VS Code 写，GitHub 编译
+### B. 没 Mac：GitHub 编译 + Sideloadly 签名
 
-1. 把 `NovelReader` 推到 GitHub
-2. push 会自动跑 `.github/workflows/ios-build.yml`（`macos-15` 上编模拟器版），报错看 Actions 日志，`build.log` 也在 artifact 里
-3. 想装到手机上：Actions 里手动运行 **Unsigned IPA**，下载 `NovelReader-unsigned-ipa`
-4. Windows 上装 [Sideloadly](https://sideloadly.io)，选这个 ipa、填自己的 Apple ID，签进手机
-   - 免费 Apple ID：7 天过期、最多 3 个 App；付费开发者账号（$99/年）：一年
-   - 装完闪退多半是 Bundle ID 撞了，改 `PRODUCT_BUNDLE_IDENTIFIER` 重新打
+本地 git 仓库已经建好并提交过一次，只差一个远程地址。
 
-Windows 上用 VS Code 的建议：Swift 扩展**别装**（`.vscode/extensions.json` 只推荐、不强制），当文本编辑器用就好。
+**0. 准备**
+
+- GitHub 账号
+- 一台 **iOS 17 或更新** 的 iPhone
+- 数据线
+- Apple ID（免费的就行）
+- [Sideloadly](https://sideloadly.io)（Windows 版）
+
+**1. 推到 GitHub**
+
+先在 GitHub 网页新建一个**空仓库**（私有公开都行，**不要**勾选 README / .gitignore），然后：
+
+```bash
+cd NovelReader
+git remote add origin https://github.com/<你的用户名>/<仓库名>.git
+git push -u origin main
+```
+
+第一次 push 会弹浏览器登录。
+
+**2. 等自动编译**
+
+push 完会自动跑 `iOS Build`。Actions → 这次运行：
+
+- 绿勾 = 编译通过
+- 红叉 = 运行页面顶部的 **Summary** 直接列出了 `error:` 行，不用翻几千行日志
+
+**把 Summary 里那段贴给我就行**，格式是 `文件:行号: error: 内容`。第一次大概率是红的——4300 行代码在没有 Xcode 的环境里写出来，不可能一次全对。这不是你的问题，是我这边没法编译验证；贴过来我按行改。
+
+**3. 打 ipa**
+
+编译绿了以后：Actions → 左侧 **Unsigned IPA** → `Run workflow`：
+
+- `Bundle ID` 填你自己的，比如 `com.zhangsan.modu`
+  （**别用默认的 `com.example.NovelReader`**，容易和别人的注册撞车导致签名失败）
+
+3~5 分钟后这次运行页面底部出现 `NovelReader-unsigned-ipa`，下载（是 zip，里面是 `.ipa`）。
+
+**4. 装进手机**
+
+1. iPhone 连电脑，手机上点「信任此电脑」
+2. 打开 Sideloadly，等 iPhone 图标出现，把 ipa 拖进去
+3. `Apple ID` 填你的，Start，输入密码
+4. 装完桌面有图标，第一次打开会提示「未受信任的开发者」：
+   **设置 → 通用 → VPN 与设备管理 → 开发者 App → 信任你的 Apple ID**
+
+**5. 过期与重装**
+
+免费 Apple ID 签的 App **7 天过期**（图标打不开）。再跑一次 Sideloadly 签同一个 ipa 即可，**不用重新编译**。付费账号（$99/年）是一年，还能走 TestFlight。
+
+**常见问题**
+
+| 现象 | 原因 / 处理 |
+| --- | --- |
+| 装完点开就闪退 | Bundle ID 撞了，换一个重新打 |
+| `Unable to install` | 系统低于 iOS 17，或者数据线/信任没弄好 |
+| `maximum number of apps` | 免费账号同时只能装 3 个自签 App，删一个再签 |
+| 打开提示「未受信任」 | 没做第 4 步的证书信任 |
+| 过几天打不开了 | 7 天到期，重新签一次 |
+
+Windows 上用 VS Code 的建议：Swift 扩展**别装**，当文本编辑器用就好（没有 iOS SDK，它只会满屏报错）。
+
+> 如果你的 iPhone 还是 iOS 16 或更早：告诉我，我把两处 iOS 17 专有写法换掉、deployment target 降到 16，改动很小。
 
 ### 往模拟器里放书
 

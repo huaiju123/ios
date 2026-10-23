@@ -32,6 +32,17 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build | tee build.log
 
+      - name: Summarize errors
+        if: failure()
+        run: |
+          echo "## 编译错误" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          if [ -f build.log ]; then
+            grep -E "error:" build.log | head -n 60 >> $GITHUB_STEP_SUMMARY || true
+          fi
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "_完整日志见下面的 build-log artifact_" >> $GITHUB_STEP_SUMMARY
+
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4

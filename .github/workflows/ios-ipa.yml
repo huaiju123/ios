@@ -1,9 +1,13 @@
 name: Unsigned IPA
 
-# 只在手动触发时跑：打一个未签名的 ipa，
-# 下载后用 Sideloadly / AltStore 拿自己的 Apple ID 签进手机。
+# 手动触发：打一个未签名的 ipa，下载后用 Sideloadly / AltStore 拿自己的 Apple ID 签进手机。
 on:
   workflow_dispatch:
+    inputs:
+      bundle_id:
+        description: "Bundle ID（免费签名建议改成 com.你的名字.modu，避免和别人撞）"
+        required: false
+        default: "com.example.NovelReader"
 
 jobs:
   ipa:
@@ -19,6 +23,9 @@ jobs:
       - name: Archive
         run: |
           set -o pipefail
+          BUNDLE_ID="${{ inputs.bundle_id }}"
+          if [ -z "$BUNDLE_ID" ]; then BUNDLE_ID="com.example.NovelReader"; fi
+          echo "Bundle ID: $BUNDLE_ID"
           xcodebuild archive \
             -project NovelReader.xcodeproj \
             -scheme NovelReader \
@@ -26,11 +33,24 @@ jobs:
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -archivePath build/App.xcarchive \
+            PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" | tee archive.log
 
+      - name: Summarize errors
+        if: failure()
+        run: |
+          echo "## 归档错误" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          if [ -f archive.log ]; then
+            grep -E "error:" archive.log | head -n 60 >> $GITHUB_STEP_SUMMARY || true
+          fi
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "_完整日志见下面的 archive-log artifact_" >> $GITHUB_STEP_SUMMARY
+
       - name: Package ipa
+        if: success()
         run: |
           mkdir -p build/Payload
           cp -R build/App.xcarchive/Products/Applications/NovelReader.app build/Payload/
