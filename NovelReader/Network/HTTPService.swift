@@ -45,7 +45,7 @@ enum HTTPService {
             throw HTTPError.status(http.statusCode)
         }
 
-        let headerCharset = charset ?? charset(from: response)
+        let headerCharset = charset ?? Self.charset(from: response)
         let text = TextDecoder.decode(data, charset: headerCharset ?? TextDecoder.sniffCharset(in: data))
         guard !text.isEmpty else { throw HTTPError.empty }
 

@@ -21,8 +21,8 @@ enum TextDecoder {
     /// 依次尝试：服务器声明的 charset → UTF-8 → GB18030 → Big5 → UTF-16
     static func decode(_ data: Data, charset: String? = nil) -> String {
         if let charset = charset?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines),
-           let encoding = encoding(named: charset),
-           let text = String(data: data, encoding: encoding) {
+           let enc = encoding(named: charset),
+           let text = String(data: data, encoding: enc) {
             return text
         }
         if let text = String(data: data, encoding: .utf8) { return text }
